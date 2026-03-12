@@ -7,7 +7,7 @@ let state = {
   category: 'all',
   search: '',
   sort: 'name',
-  onlineOnly: false,
+  onlineFilter: 'all', // 'all' | 'fully-online' | 'exam-online'
   modal: null,
   visibleCount: 60,
 }
@@ -60,7 +60,7 @@ function getFiltered() {
   const q = state.search.toLowerCase().trim()
   let results = licenses.filter(l => {
     const catMatch = state.category === 'all' || l.category === state.category
-    const onlineMatch = !state.onlineOnly || l.online
+    const onlineMatch = state.onlineFilter === 'all' || (state.onlineFilter === 'fully-online' && l.online) || (state.onlineFilter === 'exam-online' && l.examOnline)
     if (!catMatch || !onlineMatch) return false
     if (!q) return true
     return (
@@ -200,10 +200,11 @@ function renderFilters() {
                 </button>
               `).join('')}
           </div>
-          <label class="shrink-0 flex items-center gap-2 text-sm text-stone-600 cursor-pointer select-none">
-            <input type="checkbox" id="online-toggle" class="w-4 h-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500" ${state.onlineOnly ? 'checked' : ''}>
-            <span class="hidden sm:inline">Online only</span>
-          </label>
+          <select id="online-filter" class="shrink-0 text-sm bg-white border border-stone-200 rounded-lg px-3 py-1.5 text-stone-600 cursor-pointer">
+            <option value="all" ${state.onlineFilter === 'all' ? 'selected' : ''}>All formats</option>
+            <option value="fully-online" ${state.onlineFilter === 'fully-online' ? 'selected' : ''}>Fully online</option>
+            <option value="exam-online" ${state.onlineFilter === 'exam-online' ? 'selected' : ''}>Exam online</option>
+          </select>
           <select id="sort-select" class="shrink-0 text-sm bg-white border border-stone-200 rounded-lg px-3 py-1.5 text-stone-600 cursor-pointer">
             <option value="name" ${state.sort === 'name' ? 'selected' : ''}>A-Z</option>
             <option value="difficulty-asc" ${state.sort === 'difficulty-asc' ? 'selected' : ''}>Easiest first</option>
@@ -489,8 +490,8 @@ function bindFilterEvents() {
     updateGrid()
   })
 
-  document.getElementById('online-toggle')?.addEventListener('change', e => {
-    state.onlineOnly = e.target.checked
+  document.getElementById('online-filter')?.addEventListener('change', e => {
+    state.onlineFilter = e.target.value
     updateGrid()
   })
 }
