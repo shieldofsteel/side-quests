@@ -9,6 +9,7 @@ let state = {
   sort: 'name',
   onlineFilter: 'all', // 'all' | 'fully-online' | 'exam-online'
   modal: null,
+  filtersOpen: false,
   visibleCount: 60,
 }
 
@@ -187,7 +188,7 @@ function renderFilters() {
   return `
     <div class="filter-bar sticky top-[57px] z-30 bg-stone-50/90 backdrop-blur-xl border-b border-stone-200/40 py-3">
       <div class="max-w-7xl mx-auto px-4 sm:px-6">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
           <div id="filter-pills" class="filter-pills flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
             <button data-cat="all" class="shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${state.category === 'all' ? 'pill-active' : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'}">
               All
@@ -200,12 +201,32 @@ function renderFilters() {
                 </button>
               `).join('')}
           </div>
-          <select id="online-filter" class="shrink-0 text-sm bg-white border border-stone-200 rounded-lg px-3 py-1.5 text-stone-600 cursor-pointer">
+          <button id="filter-toggle" class="sm:hidden shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border ${state.filtersOpen || state.onlineFilter !== 'all' || state.sort !== 'name' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'} transition-colors" title="Filters & sort">
+            ${icon('sliders', 'w-4 h-4')}
+          </button>
+          <div class="hidden sm:flex items-center gap-3">
+            <select id="online-filter" class="shrink-0 text-sm bg-white border border-stone-200 rounded-lg px-3 py-1.5 text-stone-600 cursor-pointer">
+              <option value="all" ${state.onlineFilter === 'all' ? 'selected' : ''}>All formats</option>
+              <option value="fully-online" ${state.onlineFilter === 'fully-online' ? 'selected' : ''}>Fully online</option>
+              <option value="exam-online" ${state.onlineFilter === 'exam-online' ? 'selected' : ''}>Exam online</option>
+            </select>
+            <select id="sort-select" class="shrink-0 text-sm bg-white border border-stone-200 rounded-lg px-3 py-1.5 text-stone-600 cursor-pointer">
+              <option value="name" ${state.sort === 'name' ? 'selected' : ''}>A-Z</option>
+              <option value="difficulty-asc" ${state.sort === 'difficulty-asc' ? 'selected' : ''}>Easiest first</option>
+              <option value="difficulty-desc" ${state.sort === 'difficulty-desc' ? 'selected' : ''}>Hardest first</option>
+              <option value="time-asc" ${state.sort === 'time-asc' ? 'selected' : ''}>Fastest first</option>
+              <option value="time-desc" ${state.sort === 'time-desc' ? 'selected' : ''}>Longest first</option>
+            </select>
+          </div>
+        </div>
+        ${state.filtersOpen ? `
+        <div id="mobile-filters" class="sm:hidden flex items-center gap-3 mt-3 pt-3 border-t border-stone-200/40">
+          <select id="online-filter-mobile" class="flex-1 text-sm bg-white border border-stone-200 rounded-lg px-3 py-2 text-stone-600 cursor-pointer">
             <option value="all" ${state.onlineFilter === 'all' ? 'selected' : ''}>All formats</option>
             <option value="fully-online" ${state.onlineFilter === 'fully-online' ? 'selected' : ''}>Fully online</option>
             <option value="exam-online" ${state.onlineFilter === 'exam-online' ? 'selected' : ''}>Exam online</option>
           </select>
-          <select id="sort-select" class="shrink-0 text-sm bg-white border border-stone-200 rounded-lg px-3 py-1.5 text-stone-600 cursor-pointer">
+          <select id="sort-select-mobile" class="flex-1 text-sm bg-white border border-stone-200 rounded-lg px-3 py-2 text-stone-600 cursor-pointer">
             <option value="name" ${state.sort === 'name' ? 'selected' : ''}>A-Z</option>
             <option value="difficulty-asc" ${state.sort === 'difficulty-asc' ? 'selected' : ''}>Easiest first</option>
             <option value="difficulty-desc" ${state.sort === 'difficulty-desc' ? 'selected' : ''}>Hardest first</option>
@@ -213,6 +234,7 @@ function renderFilters() {
             <option value="time-desc" ${state.sort === 'time-desc' ? 'selected' : ''}>Longest first</option>
           </select>
         </div>
+        ` : ''}
       </div>
     </div>
   `
@@ -492,6 +514,23 @@ function bindFilterEvents() {
 
   document.getElementById('online-filter')?.addEventListener('change', e => {
     state.onlineFilter = e.target.value
+    updateGrid()
+  })
+
+  // Mobile filter toggle
+  document.getElementById('filter-toggle')?.addEventListener('click', () => {
+    state.filtersOpen = !state.filtersOpen
+    updateFiltersAndGrid()
+  })
+
+  // Mobile filter selects
+  document.getElementById('online-filter-mobile')?.addEventListener('change', e => {
+    state.onlineFilter = e.target.value
+    updateGrid()
+  })
+
+  document.getElementById('sort-select-mobile')?.addEventListener('change', e => {
+    state.sort = e.target.value
     updateGrid()
   })
 }

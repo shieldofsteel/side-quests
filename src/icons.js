@@ -31,6 +31,7 @@ import graduationCap from 'lucide-static/icons/graduation-cap.svg?raw'
 import hardHat from 'lucide-static/icons/hard-hat.svg?raw'
 import landmark from 'lucide-static/icons/landmark.svg?raw'
 import flaskConical from 'lucide-static/icons/flask-conical.svg?raw'
+import slidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw'
 
 export const icons = {
   // Category icons
@@ -69,6 +70,7 @@ export const icons = {
   chevronLeft,
   chevronRight,
   arrowUpDown,
+  sliders: slidersHorizontal,
 }
 
 // Render an icon with optional classes. Strips the outer width/height to let CSS control sizing.
