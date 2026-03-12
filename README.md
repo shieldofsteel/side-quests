@@ -1,13 +1,14 @@
 # Side Quests — Professional Licenses & Certifications Database
 
-> **1,419 professional licenses and certifications** across 20 categories, with an intelligent API and MCP server for AI agents.
+> **2,551 professional licenses and certifications** across 20 categories, 100% verified for exam delivery method. Includes an intelligent API and MCP server for AI agents.
 
 🔗 **Website:** [side.jr.al](https://side.jr.al)  
 🔗 **API:** [licenses-api.jr.al](https://licenses-api.jr.al)  
 📖 **License:** MIT
 
-![Side Quests](https://img.shields.io/badge/licenses-1%2C419-amber)
+![Side Quests](https://img.shields.io/badge/certifications-2%2C551-amber)
 ![Categories](https://img.shields.io/badge/categories-20-blue)
+![Verified](https://img.shields.io/badge/verified-100%25-green)
 ![API](https://img.shields.io/badge/API-live-green)
 ![MCP](https://img.shields.io/badge/MCP-enabled-purple)
 
@@ -15,12 +16,24 @@
 
 ## What Is This?
 
-A comprehensive, searchable database of professional licenses and certifications available in the United States, with a focus on practical information: cost, timeframe, difficulty, online availability, and official URLs.
+A comprehensive, searchable database of professional licenses and certifications available in the United States, with verified exam delivery information: whether it's fully online, exam-online-only, or requires in-person attendance.
 
 **Data sources:**
-- DoD COOL (Credentialing Opportunities On-Line) — army, USMC, and Coast Guard credential databases
-- Manual research and verification for 300+ hand-curated entries
-- Community contributions welcome
+- DoD COOL (Credentialing Opportunities On-Line) — army, USMC, and Coast Guard credential databases (2,213 entries)
+- Manual research and verification for 338 hand-curated entries
+- Issuer-level verification of exam delivery methods for all 675 issuing bodies
+
+## Verification Process
+
+Every entry has been verified at the **issuing body level** for exam delivery method:
+
+- **675 unique issuing bodies** were researched
+- **8 AI research agents** ran in parallel, each verifying ~85 issuers
+- Results were mapped back to all 2,551 individual certifications
+- Key distinctions: "exam is online" ≠ "entire certification is online"
+  - e.g., Pearson VUE center-only → `online: false`
+  - e.g., Pearson VUE with OnVUE remote → `examOnline: true`
+  - e.g., Cert requires clinical hours → `online: false` regardless of exam format
 
 ## Features
 
@@ -28,8 +41,8 @@ A comprehensive, searchable database of professional licenses and certifications
 - **Search** — full-text search across names, descriptions, tags
 - **Filter** — by category, online availability, difficulty
 - **Sort** — A-Z, easiest/hardest first, fastest/longest first
-- **Cards** — clean card grid with difficulty pips, cost, time, online badge
-- **Modal** — detailed view with requirements, fun facts, official links
+- **Cards** — clean card grid with difficulty pips, cost, time, online/exam-online badges
+- **Modal** — detailed view with exam delivery method, verification status, requirements, fun facts
 - **Mobile** — fully responsive, works on any device
 
 ### API (`licenses-api.jr.al`)
@@ -102,12 +115,14 @@ GET /licenses?q=<query>&category=<cat>&online=<bool>&difficulty=<1-5>&maxCost=<n
 |-----------|------|-------------|
 | `q` | string | Search query |
 | `category` | string | Filter by category |
-| `online` | boolean | Only online-available certs |
+| `online` | boolean | Only fully-online certs (entire process) |
+| `examOnline` | boolean | Certs where exam has remote proctoring option |
 | `difficulty` | integer | Exact difficulty (1-5) |
 | `minDifficulty` | integer | Minimum difficulty |
 | `maxDifficulty` | integer | Maximum difficulty |
 | `maxCost` | integer | Maximum cost in dollars |
 | `issuingBody` | string | Filter by issuing organization |
+| `examDelivery` | string | Filter by delivery: `online-proctored`, `testing-center`, `in-person-practical`, `online-self-paced`, `hybrid`, `varies` |
 | `sort` | string | `name`, `difficulty-asc`, `difficulty-desc`, `cost-asc`, `cost-desc` |
 | `limit` | integer | Results per page (max 100) |
 | `offset` | integer | Pagination offset |
@@ -150,46 +165,68 @@ interface License {
   id: string              // Unique kebab-case identifier
   name: string            // Full certification name
   category: string        // One of 20 categories
-  tagline: string         // One-line description (max 80 chars)
+  tagline: string         // One-line description
   description: string     // 2-3 sentence description
-  requirements: string[]  // 3-5 requirements
+  requirements: string[]  // Requirements list
   cost: string            // Cost range (e.g., "$100 - $500")
   timeframe: string       // Time to obtain (e.g., "3 - 6 months")
-  difficulty: number      // 1 (easiest) to 5 (hardest)
+  difficulty: number      // 1 (weekend project) to 5 (years of commitment)
   issuingBody: string     // Organization that issues the cert
   region: string          // Geographic availability
   renewalInfo: string     // Renewal requirements
-  funFact: string         // Interesting fact about the cert
+  funFact: string         // Interesting fact
   officialUrl: string     // Official website
-  online: boolean         // Can be obtained fully online
-  tags: string[]          // 3-5 searchable tags
+  online: boolean         // TRUE only if entire process is fully online
+  examOnline: boolean     // TRUE if exam has remote proctoring option
+  examDelivery: string    // How the exam is delivered (see below)
+  verified: boolean       // Has been verified at issuer level
+  tags: string[]          // Searchable tags
 }
 ```
 
+### Exam Delivery Types
+
+| Value | Meaning | Example |
+|-------|---------|---------|
+| `online-proctored` | Exam taken from home with live proctor | CompTIA via OnVUE, GIAC via ProctorU |
+| `testing-center` | Must go to Pearson VUE / Prometric / PSI center | CPA exam, NCLEX, bar exam |
+| `in-person-practical` | Hands-on skills assessment required | FAA checkride, welding test, CPR skills |
+| `online-self-paced` | Unproctored online exam/assessment | Google via Coursera, HubSpot Academy |
+| `hybrid` | Mix of online and in-person components | NBPTS (portfolio + exam), some ETA certs |
+| `varies` | Differs by specific certification or jurisdiction | State licenses, FCC (depends on license class) |
+
+### Understanding Online Fields
+
+- **`online: true`** = You can complete the ENTIRE certification without going anywhere in person. No testing center, no clinical hours, no field work.
+- **`examOnline: true`** = The exam itself can be taken remotely (e.g., OnVUE, PSI Bridge), but the certification may still require in-person clinical hours, supervised practice, or other requirements.
+- **`online: false` + `examOnline: false`** = You must appear in person for the exam AND potentially other requirements.
+
 ## Categories
 
-| Category | Count | Online % | Description |
-|----------|-------|----------|-------------|
-| Health & Medical | 476 | 78% | Medical board certifications, nursing, pharmacy |
-| Construction & Building | 291 | 90% | ICC inspections, ACI concrete, NCCER trades |
-| Online & Digital | 94 | 93% | Cloud, cybersecurity, web development |
-| Education & Teaching | 91 | 75% | NBPTS board certs, teaching credentials |
-| Aviation & Aerospace | 82 | 6% | FAA pilot, mechanic, dispatcher certs |
-| Finance & Banking | 67 | 94% | CPA, CFA, financial planning |
-| Skilled Trades | 65 | 60% | HVAC, welding, electrical, plumbing |
-| Legal & Compliance | 40 | 85% | Paralegal, notary, compliance |
-| Technology & IT | 34 | 59% | CompTIA, Cisco, AWS, cybersecurity |
-| Government & Public Service | 32 | 75% | Government finance, intelligence, public works |
-| Science & Lab | 28 | 93% | Laboratory, environmental, geospatial |
-| Maritime & Diving | 26 | 8% | USCG licenses, PADI diving, sailing |
-| Outdoor & Recreation | 20 | 45% | Hunting, fishing, forestry, wilderness |
-| Emergency & First Response | 16 | 44% | EMT, paramedic, CPR, CERT |
-| Food & Beverage | 15 | 93% | Food handler, sommelier, culinary |
-| Sports & Fitness | 14 | 21% | Personal trainer, coaching, referee |
-| Driving & CDL | 10 | 0% | CDL Class A/B, endorsements |
-| Creative & Media | 8 | 50% | Adobe, photography, media production |
-| Agriculture & Farming | 6 | 50% | Pesticide, organic, soil science |
-| Firearms & Weapons | 4 | 0% | FFL, concealed carry, ATF |
+| Category | Count | Fully Online | Exam Online | Description |
+|----------|-------|-------------|-------------|-------------|
+| Health & Medical | 771 | 178 (23%) | 297 (39%) | Medical board certs, nursing, pharmacy |
+| Online & Digital | 541 | 354 (65%) | 397 (73%) | Cloud, cybersecurity, web development |
+| Construction | 381 | 132 (35%) | 253 (66%) | ICC inspections, ACI concrete, NCCER |
+| Skilled Trades | 131 | 14 (11%) | 27 (21%) | HVAC, welding, electrical, plumbing |
+| Maritime & Diving | 124 | 4 (3%) | 4 (3%) | USCG licenses, PADI diving, sailing |
+| Aviation | 111 | 2 (2%) | 24 (22%) | FAA pilot, mechanic, dispatcher |
+| Education | 103 | 54 (52%) | 73 (71%) | NBPTS board certs, teaching credentials |
+| Finance & Banking | 75 | 51 (68%) | 55 (73%) | CPA, CFA, financial planning |
+| Government | 72 | 51 (71%) | 54 (75%) | Government finance, intelligence |
+| Technology | 70 | 24 (34%) | 61 (87%) | CompTIA, Cisco, AWS |
+| Legal | 40 | 16 (40%) | 17 (43%) | Paralegal, notary, compliance |
+| Science & Lab | 28 | 17 (61%) | 21 (75%) | Laboratory, environmental |
+| Emergency | 22 | 2 (9%) | 2 (9%) | EMT, paramedic, CPR |
+| Outdoor | 20 | 4 (20%) | 4 (20%) | Hunting, fishing, forestry |
+| Food & Beverage | 15 | 3 (20%) | 3 (20%) | Food handler, sommelier |
+| Driving & CDL | 15 | 1 (7%) | 1 (7%) | CDL Class A/B, endorsements |
+| Sports & Fitness | 14 | 1 (7%) | 2 (14%) | Personal trainer, coaching |
+| Creative & Media | 8 | 1 (13%) | 1 (13%) | Adobe, photography |
+| Agriculture | 6 | 2 (33%) | 2 (33%) | Pesticide, organic, soil |
+| Firearms | 4 | 0 (0%) | 0 (0%) | FFL, concealed carry, ATF |
+
+**Totals:** 825 fully online (32%) · 1,223 exam online (48%) · 2,551 total
 
 ---
 
@@ -208,11 +245,13 @@ Contributions welcome! To add or correct a certification:
 1. Fork this repo
 2. Edit `src/data/licenses.js`
 3. Follow the data schema above
-4. Ensure `online` field accurately reflects whether the cert can be obtained fully online
-5. Submit a PR with sources for any new data
+4. Ensure `online` is TRUE only if the entire certification process is fully online
+5. Set `examOnline` if the exam has a remote proctoring option
+6. Set `examDelivery` to the appropriate delivery type
+7. Submit a PR with sources for any new data
 
 ## License
 
-MIT - see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE) for details.
 
 Built by [Shield of Steel](https://shieldofsteel.com).
