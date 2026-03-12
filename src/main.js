@@ -102,8 +102,9 @@ function renderHeader() {
         </a>
         <div class="flex items-center gap-3 text-sm text-stone-500">
           <span class="hidden sm:inline font-mono text-xs" style="font-family:var(--font-mono)">${licenses.length} quests</span>
-          <a href="https://github.com" target="_blank" rel="noopener" class="hover:text-stone-900 transition-colors">
-            ${icon('github', 'w-5 h-5')}
+          <a href="https://github.com/shieldofsteel/side-quests" target="_blank" rel="noopener" class="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 text-white text-xs font-medium rounded-lg hover:bg-stone-800 transition-colors">
+            ${icon('github', 'w-4 h-4')}
+            <span class="hidden sm:inline">GitHub</span>
           </a>
         </div>
       </div>
