@@ -1,0 +1,14 @@
+name = "licenses-api"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+account_id = "4f64eac4e025fb5a7cccc15418b3e2e0"
+
+workers_dev = true
+
+routes = [
+  { pattern = "licenses-api.jr.al/*", zone_name = "jr.al" }
+]
+
+[[kv_namespaces]]
+binding = "LICENSES_KV"
+id = "10f892a7e6c04cb0b9ebbafdba486f03"
