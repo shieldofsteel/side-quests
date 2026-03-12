@@ -42,6 +42,19 @@ function parseTimeframeWeeks(tf) {
 
 // Online field is explicit on every entry — no guessing
 
+function formatDelivery(d) {
+  const map = {
+    'online-proctored': 'Online proctored',
+    'testing-center': 'Testing center',
+    'in-person-practical': 'In-person practical',
+    'online-self-paced': 'Online self-paced',
+    'hybrid': 'Hybrid',
+    'varies': 'Varies',
+    'unknown': 'Unknown',
+  }
+  return map[d] || d
+}
+
 // --- Filtering & Sorting ---
 function getFiltered() {
   const q = state.search.toLowerCase().trim()
@@ -220,7 +233,8 @@ function renderCard(license) {
           <span class="flex items-center gap-1" title="Time">${icon('clock', 'w-3.5 h-3.5')} ${license.timeframe.split(' - ')[0]}</span>
         </div>
         <div class="flex items-center gap-2">
-          ${license.online ? '<span class="text-emerald-600 text-[10px] font-medium px-1.5 py-0.5 bg-emerald-50 rounded" title="Available online">online</span>' : ''}
+          ${license.online ? '<span class="text-emerald-600 text-[10px] font-medium px-1.5 py-0.5 bg-emerald-50 rounded" title="Fully online - entire process">online</span>' : license.examOnline ? '<span class="text-blue-600 text-[10px] font-medium px-1.5 py-0.5 bg-blue-50 rounded" title="Exam available online, but other requirements need in-person">exam online</span>' : ''}
+          ${license.verified ? '' : '<span class="text-stone-400 text-[10px]" title="Not yet verified">?</span>'}
           ${renderPips(license.difficulty)}
         </div>
       </div>
@@ -319,6 +333,15 @@ function renderModal() {
             <div>
               <span class="text-stone-400">Renewal:</span>
               <span class="text-stone-700 font-medium ml-1">${l.renewalInfo}</span>
+            </div>
+            <div>
+              <span class="text-stone-400">Exam delivery:</span>
+              <span class="text-stone-700 font-medium ml-1">${formatDelivery(l.examDelivery)}</span>
+            </div>
+            <div>
+              <span class="text-stone-400">Online status:</span>
+              <span class="ml-1">${l.online ? '<span class="text-emerald-600 font-medium">Fully online</span>' : l.examOnline ? '<span class="text-blue-600 font-medium">Exam online only</span>' : '<span class="text-stone-600 font-medium">In-person required</span>'}</span>
+              ${l.verified ? '<span class="text-emerald-500 text-xs ml-1" title="Verified">\u2713</span>' : '<span class="text-stone-400 text-xs ml-1" title="Unverified">?</span>'}
             </div>
           </div>
 
